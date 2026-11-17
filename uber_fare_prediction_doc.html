@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uber Fare Prediction</title>
+<style>
+:root{
+  --bg:#f7f6f2; --surface:#ffffff; --text:#1d1d1f; --muted:#5c5c66; --border:#e2e0d8;
+  --accent:#0b6e4f; --accent-soft:#e3f1ec; --code-bg:#f1efe8; --warn:#8a5a00; --warn-soft:#fbf1dc;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --surface:#1d1d21; --text:#ececf0; --muted:#a2a2ad; --border:#33333a;
+    --accent:#4cc79a; --accent-soft:#16302a; --code-bg:#24242a; --warn:#f0c060; --warn-soft:#332a14;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --surface:#1d1d21; --text:#ececf0; --muted:#a2a2ad; --border:#33333a;
+  --accent:#4cc79a; --accent-soft:#16302a; --code-bg:#24242a; --warn:#f0c060; --warn-soft:#332a14;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:32px 16px 80px}
+header{border-bottom:1px solid var(--border);padding-bottom:20px;margin-bottom:8px}
+.tag{display:inline-block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:3px 10px;border-radius:999px;font-weight:600}
+h1{font-size:30px;line-height:1.25;margin:12px 0 6px}
+h2{font-size:22px;margin:40px 0 12px;padding-top:8px;border-top:1px solid var(--border)}
+h3{font-size:17px;margin:24px 0 8px}
+p,li{color:var(--text)}
+.muted{color:var(--muted)}
+nav{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin:20px 0}
+nav ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+nav a{color:var(--accent);text-decoration:none}
+nav a:hover{text-decoration:underline}
+@media (max-width:600px){nav ol{columns:1}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin:14px 0}
+.note{background:var(--warn-soft);border-left:4px solid var(--warn);padding:12px 16px;border-radius:6px;margin:14px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft)}
+.tbl{overflow-x:auto}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:14px;overflow-x:auto;font-size:13.5px;line-height:1.5}
+pre code{background:none;padding:0}
+.formula{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--code-bg);padding:10px 14px;border-radius:6px;display:block;margin:8px 0;overflow-x:auto}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.flow span{background:var(--surface);border:1px solid var(--accent);color:var(--accent);padding:6px 12px;border-radius:6px;font-size:14px;font-weight:600}
+.flow b{color:var(--muted)}
+details{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin:8px 0;padding:0 14px}
+summary{cursor:pointer;padding:11px 0;font-weight:600}
+details[open] summary{border-bottom:1px solid var(--border);margin-bottom:8px}
+details p{margin:8px 0 12px}
+ol.steps li{margin:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="tag">Machine Learning Practical 6</span>
+  <h1>Uber Fare Prediction</h1>
+  <p class="muted">Predict the price of an Uber ride from a pickup point to the drop-off location using Linear Regression and Random Forest Regression.</p>
+</header>
+
+<nav>
+  <ol>
+    <li><a href="#aim">Aim &amp; Objectives</a></li>
+    <li><a href="#domain">Domain &amp; Concepts</a></li>
+    <li><a href="#dataset">Dataset</a></li>
+    <li><a href="#theory">Theory</a></li>
+    <li><a href="#metrics">Evaluation Metrics</a></li>
+    <li><a href="#steps">Steps to Perform</a></li>
+    <li><a href="#code">Code Explained</a></li>
+    <li><a href="#output">Expected Output &amp; Conclusion</a></li>
+    <li><a href="#viva">Viva Questions</a></li>
+  </ol>
+</nav>
+
+<h2 id="aim">1. Aim &amp; Objectives</h2>
+<p><strong>Aim:</strong> Predict the price of an Uber ride from a given pickup point to the agreed drop-off location.</p>
+<p><strong>Tasks:</strong></p>
+<ol>
+  <li>Pre-process the dataset.</li>
+  <li>Identify outliers.</li>
+  <li>Check the correlation.</li>
+  <li>Implement linear regression and random forest regression models.</li>
+  <li>Evaluate the models and compare their scores (R², RMSE, etc.).</li>
+</ol>
+<p><strong>Software:</strong> Python 3, Jupyter Notebook / VS Code, NumPy, Pandas, Matplotlib, Seaborn, Scikit-learn.</p>
+
+<h2 id="domain">2. Domain &amp; Concepts Used</h2>
+<div class="tbl"><table>
+<tr><th>Area</th><th>What we use from it</th></tr>
+<tr><td><strong>Machine Learning</strong> → Supervised Learning → <strong>Regression</strong></td><td>The target (<code>fare_amount</code>) is a continuous number and we have labelled data, so this is a supervised regression problem.</td></tr>
+<tr><td><strong>Data Science / Exploratory Data Analysis (EDA)</strong></td><td>Data cleaning, handling missing values, feature engineering, visualisation (boxplot, heatmap).</td></tr>
+<tr><td><strong>Statistics</strong></td><td>Quartiles and IQR for outlier detection; Pearson correlation coefficient; error metrics (MSE, RMSE, MAE, R²).</td></tr>
+<tr><td><strong>Ensemble Learning</strong> (Bagging)</td><td>Random Forest combines many decision trees trained on bootstrap samples.</td></tr>
+<tr><td><strong>Geospatial computation</strong></td><td>Haversine formula converts latitude/longitude pairs into real distance in km.</td></tr>
+</table></div>
+
+<div class="flow">
+  <span>Load data</span><b>→</b><span>Pre-process</span><b>→</b><span>Outliers</span><b>→</b><span>Correlation</span><b>→</b><span>Train/Test split</span><b>→</b><span>LR &amp; RF</span><b>→</b><span>Evaluate &amp; compare</span>
+</div>
+
+<h2 id="dataset">3. Dataset</h2>
+<p>Source: <a href="https://www.kaggle.com/datasets/yasserh/uber-fares-dataset">kaggle.com/datasets/yasserh/uber-fares-dataset</a> — file <code>uber.csv</code>, about 2,00,000 rows of New York City Uber trips (2009–2015).</p>
+<div class="tbl"><table>
+<tr><th>Column</th><th>Meaning</th><th>Used?</th></tr>
+<tr><td><code>Unnamed: 0</code></td><td>Row index</td><td>Dropped</td></tr>
+<tr><td><code>key</code></td><td>Unique ride ID</td><td>Dropped</td></tr>
+<tr><td><code>fare_amount</code></td><td>Cost of the trip in USD — <strong>target (y)</strong></td><td>Target</td></tr>
+<tr><td><code>pickup_datetime</code></td><td>Date &amp; time when the ride started</td><td>Converted to hour, day, month, year, dayofweek</td></tr>
+<tr><td><code>pickup_longitude</code>, <code>pickup_latitude</code></td><td>Pickup location</td><td>Feature + used for distance</td></tr>
+<tr><td><code>dropoff_longitude</code>, <code>dropoff_latitude</code></td><td>Drop-off location</td><td>Feature + used for distance</td></tr>
+<tr><td><code>passenger_count</code></td><td>Number of passengers</td><td>Feature</td></tr>
+</table></div>
+<div class="note"><strong>Known data problems:</strong> 1 row with missing drop-off coordinates, negative/zero fares, coordinates = 0 or outside the valid range, passenger counts of 0 or 208, and extreme fares (up to ~$499). All of these are handled in pre-processing and outlier removal.</div>
+
+<h2 id="theory">4. Theory</h2>
+
+<h3>4.1 Data Pre-processing</h3>
+<p>Raw data cannot be fed directly to a model. Steps done:</p>
+<ul>
+  <li><strong>Drop irrelevant columns</strong> — <code>Unnamed: 0</code> and <code>key</code> are identifiers, not information.</li>
+  <li><strong>Handle missing values</strong> — very few rows, so they are dropped (<code>dropna()</code>).</li>
+  <li><strong>Type conversion</strong> — <code>pickup_datetime</code> is text; convert with <code>pd.to_datetime()</code>.</li>
+  <li><strong>Feature engineering</strong> — extract <code>hour, day, month, year, dayofweek</code> (fare depends on peak hours, weekdays, yearly price changes) and compute <code>distance_km</code>.</li>
+  <li><strong>Remove invalid records</strong> — fare ≤ 0, distance = 0, passengers outside 1–6, latitude outside ±90, longitude outside ±180.</li>
+</ul>
+
+<h3>4.2 Haversine Distance</h3>
+<p>Fare mainly depends on distance, but the dataset only gives coordinates. The Haversine formula gives the great-circle distance between two points on a sphere:</p>
+<span class="formula">a = sin²(Δlat/2) + cos(lat1)·cos(lat2)·sin²(Δlon/2)<br>d = 2 · R · arcsin(√a)&nbsp;&nbsp;&nbsp;&nbsp;(R = 6371 km)</span>
+<p>Angles must be converted to radians first.</p>
+
+<h3>4.3 Outliers &amp; the IQR Method</h3>
+<p>An <strong>outlier</strong> is a data point that is very different from the rest (e.g. a $499 fare or 5000 km ride). Outliers pull a regression line towards themselves and increase error.</p>
+<p><strong>Detection:</strong> visually with a <strong>boxplot</strong>, numerically with the <strong>Inter-Quartile Range</strong>:</p>
+<span class="formula">IQR = Q3 − Q1<br>Lower bound = Q1 − 1.5 × IQR<br>Upper bound = Q3 + 1.5 × IQR</span>
+<p>Q1 = 25th percentile, Q3 = 75th percentile. Values outside the bounds are outliers and are removed. We apply it to <code>fare_amount</code> and <code>distance_km</code>.</p>
+
+<h3>4.4 Correlation</h3>
+<p>Correlation measures the strength and direction of a <em>linear</em> relationship between two variables. Pandas <code>df.corr()</code> uses the <strong>Pearson coefficient</strong>:</p>
+<span class="formula">r = Σ(x − x̄)(y − ȳ) / √[ Σ(x − x̄)² · Σ(y − ȳ)² ]&nbsp;&nbsp;&nbsp;&nbsp;−1 ≤ r ≤ +1</span>
+<ul>
+  <li>r ≈ +1 → strong positive, r ≈ −1 → strong negative, r ≈ 0 → no linear relationship.</li>
+  <li>Shown as a <strong>heatmap</strong>. Expected result: <code>distance_km</code> has the highest correlation with <code>fare_amount</code> (≈ 0.7–0.8 after cleaning); raw coordinates and passenger count have almost none.</li>
+</ul>
+
+<h3>4.5 Linear Regression</h3>
+<p>Fits a straight line (hyper-plane) through the data:</p>
+<span class="formula">ŷ = β₀ + β₁x₁ + β₂x₂ + … + βₙxₙ</span>
+<p>Coefficients β are found by <strong>Ordinary Least Squares (OLS)</strong> — minimising the sum of squared residuals Σ(y − ŷ)². Simple, fast, interpretable, but can only model linear relationships.</p>
+<p><strong>Assumptions:</strong> linearity, independence of errors, homoscedasticity (constant error variance), normality of errors, no multicollinearity.</p>
+
+<h3>4.6 Random Forest Regression</h3>
+<p>An <strong>ensemble</strong> of many decision trees using <strong>bagging</strong> (Bootstrap Aggregating):</p>
+<ol>
+  <li>Create many bootstrap samples (random sampling with replacement) of the training data.</li>
+  <li>Train a decision tree on each sample; at each split only a random subset of features is considered.</li>
+  <li>For a new ride, every tree predicts a fare; the forest returns the <strong>average</strong>.</li>
+</ol>
+<p>Averaging many de-correlated trees reduces variance (overfitting), captures non-linear relationships, and is robust to outliers. Key hyper-parameters: <code>n_estimators</code> (number of trees), <code>max_depth</code>, <code>min_samples_split</code>, <code>max_features</code>.</p>
+
+<h3>4.7 Train–Test Split</h3>
+<p>Data is split 80% training / 20% testing (<code>test_size=0.2</code>) so the model is evaluated on rides it has never seen. <code>random_state=42</code> makes the split reproducible.</p>
+
+<h2 id="metrics">5. Evaluation Metrics</h2>
+<div class="tbl"><table>
+<tr><th>Metric</th><th>Formula</th><th>Meaning</th><th>Better</th></tr>
+<tr><td><strong>R² Score</strong></td><td><code>1 − SS_res / SS_tot</code></td><td>Proportion of variance in fare explained by the model.</td><td>Closer to 1</td></tr>
+<tr><td><strong>MSE</strong></td><td><code>(1/n) Σ(y − ŷ)²</code></td><td>Average squared error; penalises large errors heavily.</td><td>Lower</td></tr>
+<tr><td><strong>RMSE</strong></td><td><code>√MSE</code></td><td>Error in the same unit as fare (USD).</td><td>Lower</td></tr>
+<tr><td><strong>MAE</strong></td><td><code>(1/n) Σ|y − ŷ|</code></td><td>Average absolute error; less sensitive to outliers.</td><td>Lower</td></tr>
+</table></div>
+<p class="muted">SS_res = Σ(y − ŷ)², SS_tot = Σ(y − ȳ)².</p>
+
+<h2 id="steps">6. Steps to Perform the Practical</h2>
+<ol class="steps">
+  <li><strong>Download the dataset:</strong> open the Kaggle link, sign in, click <em>Download</em>, unzip and get <code>uber.csv</code>.</li>
+  <li><strong>Create a folder</strong> and put these files together: <code>uber.csv</code>, <code>uber_fare_prediction.ipynb</code>, <code>requirements.txt</code>.</li>
+  <li><strong>Install dependencies</strong> (Ubuntu terminal, inside that folder):
+    <pre><code>sudo apt update
+sudo apt install -y python3 python3-pip python3-venv python3-tk unzip
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt</code></pre></li>
+  <li><strong>Run the code</strong> — either:
+    <ul>
+      <li>Script: <code>python3 uber_fare_prediction.py</code> (close each plot window to continue), or</li>
+      <li>Jupyter (recommended): run <code>jupyter notebook</code>, open <code>uber_fare_prediction.ipynb</code> and run each cell with <strong>Shift + Enter</strong> — one cell per task, so you can show output section by section.</li>
+    </ul></li>
+  <li><strong>Pre-process:</strong> show <code>head()</code>, <code>info()</code>, <code>isnull().sum()</code>, the new time features and <code>distance_km</code>, and the shape after cleaning.</li>
+  <li><strong>Outliers:</strong> show the boxplots before, the IQR bounds and outlier counts printed, then the boxplots after.</li>
+  <li><strong>Correlation:</strong> show the heatmap and point out that <code>distance_km</code> is most correlated with fare.</li>
+  <li><strong>Models:</strong> split 80/20, train Linear Regression and Random Forest.</li>
+  <li><strong>Evaluate:</strong> show the comparison table (R², MSE, RMSE, MAE) and the bar chart, and state which model is better.</li>
+  <li><strong>Write the conclusion.</strong></li>
+</ol>
+<div class="note"><strong>Tip:</strong> Random Forest on ~1.5 lakh rows takes about 1–2 minutes. If the lab PC is slow, change <code>n_estimators=100</code> to <code>n_estimators=50</code>.</div>
+
+<h2 id="code">7. Code Explained</h2>
+<p>Full code is in <code>uber_fare_prediction.py</code>. Key parts:</p>
+
+<h3>Load</h3>
+<pre><code>df = pd.read_csv("uber.csv")
+df.head(); df.info(); df.describe()</code></pre>
+
+<h3>1. Pre-process</h3>
+<pre><code>df = df.drop(columns=["Unnamed: 0", "key"])
+df = df.dropna()
+df["pickup_datetime"] = pd.to_datetime(df["pickup_datetime"], errors="coerce")
+df["hour"] = df["pickup_datetime"].dt.hour     # + day, month, year, dayofweek
+df = df.drop(columns=["pickup_datetime"])
+
+def haversine(lon1, lat1, lon2, lat2):
+    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+    a = np.sin((lat2-lat1)/2)**2 + np.cos(lat1)*np.cos(lat2)*np.sin((lon2-lon1)/2)**2
+    return 2 * 6371 * np.arcsin(np.sqrt(a))
+
+df = df[(df["fare_amount"] > 0) &amp; (df["distance_km"] > 0) &amp; (df["passenger_count"].between(1, 6))]</code></pre>
+
+<h3>2. Outliers (IQR)</h3>
+<pre><code>Q1, Q3 = df[c].quantile(0.25), df[c].quantile(0.75)
+IQR = Q3 - Q1
+df = df[(df[c] &gt;= Q1 - 1.5*IQR) &amp; (df[c] &lt;= Q3 + 1.5*IQR)]</code></pre>
+
+<h3>3. Correlation</h3>
+<pre><code>sns.heatmap(df.corr(), annot=True, fmt=".2f", cmap="coolwarm")</code></pre>
+
+<h3>4. Models</h3>
+<pre><code>X = df.drop(columns=["fare_amount"]); y = df["fare_amount"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+lr = LinearRegression().fit(X_train, y_train)
+rf = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1).fit(X_train, y_train)</code></pre>
+
+<h3>5. Evaluate</h3>
+<pre><code>r2_score(y_test, y_pred)
+np.sqrt(mean_squared_error(y_test, y_pred))   # RMSE
+mean_absolute_error(y_test, y_pred)</code></pre>
+
+<h2 id="output">8. Expected Output &amp; Conclusion</h2>
+<p>Actual output of this code on the Kaggle <code>uber.csv</code> (2,00,000 rows):</p>
+<ul>
+  <li>Missing values: 1 row (drop-off coordinates). Shape after pre-processing: <strong>(193644, 12)</strong></li>
+  <li>IQR outliers: fare_amount <strong>16,619</strong> (bounds −3.75 to 22.25), distance_km <strong>8,006</strong> (bounds −1.95 to 6.51). Shape after removal: <strong>(169019, 12)</strong></li>
+  <li>Correlation with fare: distance_km <strong>0.80</strong>, year 0.17, all others ≈ 0</li>
+</ul>
+<div class="tbl"><table>
+<tr><th>Model</th><th>R²</th><th>MSE</th><th>RMSE (USD)</th><th>MAE</th></tr>
+<tr><td>Linear Regression</td><td>0.6730</td><td>4.5233</td><td>2.1268</td><td>1.5198</td></tr>
+<tr><td><strong>Random Forest</strong></td><td><strong>0.7481</strong></td><td><strong>3.4845</strong></td><td><strong>1.8667</strong></td><td><strong>1.2986</strong></td></tr>
+</table></div>
+<div class="card">
+<p><strong>Conclusion:</strong> The Uber fares dataset was pre-processed (missing values, invalid records, datetime features, Haversine distance), outliers were detected with boxplots and removed with the IQR method, and correlation analysis showed that trip distance is the strongest predictor of fare. Linear Regression and Random Forest Regression were trained and evaluated. Random Forest gave a higher R² and lower RMSE/MAE than Linear Regression because it captures non-linear relationships (time of day, location effects) and is robust to noise, so it is the better model for predicting Uber ride prices.</p>
+</div>
+
+<h2 id="viva">9. Viva Questions</h2>
+
+<h3>Problem &amp; Domain</h3>
+<details><summary>Q1. What type of machine learning problem is this?</summary><p>Supervised learning, regression — the output (fare) is a continuous value and labelled examples are available.</p></details>
+<details><summary>Q2. What is the difference between regression and classification?</summary><p>Regression predicts a continuous value (fare, price, temperature). Classification predicts a discrete class label (spam / not spam).</p></details>
+<details><summary>Q3. What are the features and the target in this practical?</summary><p>Target (y): <code>fare_amount</code>. Features (X): pickup/drop-off latitude &amp; longitude, passenger_count, hour, day, month, year, dayofweek and distance_km.</p></details>
+<details><summary>Q4. What is supervised vs unsupervised learning?</summary><p>Supervised learning trains on labelled data (input + correct output). Unsupervised learning finds patterns in unlabelled data (e.g. clustering).</p></details>
+
+<h3>Pre-processing</h3>
+<details><summary>Q5. What is data pre-processing and why is it needed?</summary><p>Cleaning and transforming raw data into a usable form — handling missing values, wrong types, invalid entries, creating features. Real data is noisy; garbage in gives garbage out.</p></details>
+<details><summary>Q6. How did you handle missing values? What other methods exist?</summary><p>Dropped the rows (only 1 row was missing). Alternatives: fill with mean/median/mode, forward/backward fill, interpolation, or model-based imputation.</p></details>
+<details><summary>Q7. Why did you drop the <code>key</code> and <code>Unnamed: 0</code> columns?</summary><p>They are just identifiers/indexes with no relationship to the fare; keeping them adds noise.</p></details>
+<details><summary>Q8. Why convert <code>pickup_datetime</code> and extract hour, day, etc.?</summary><p>Models cannot use a datetime string directly. Fare varies with time — peak hours, weekends, and fare increases across years — so these become useful numeric features.</p></details>
+<details><summary>Q9. What is feature engineering? Give an example from this practical.</summary><p>Creating new informative features from existing data. Example: computing <code>distance_km</code> from coordinates with the Haversine formula, and extracting hour/day/month/year from the datetime.</p></details>
+<details><summary>Q10. What is the Haversine formula and why use it?</summary><p>It computes the great-circle distance between two points on a sphere from their latitudes and longitudes. Fare depends mostly on distance, but the dataset only has coordinates, so this creates the most important feature.</p></details>
+<details><summary>Q11. Why remove rows with fare ≤ 0 or passenger_count = 0 or &gt; 6?</summary><p>They are impossible / data-entry errors — a ride can't cost nothing or a negative amount, and an UberX car can't carry 0 or 208 passengers.</p></details>
+
+<h3>Outliers</h3>
+<details><summary>Q12. What is an outlier?</summary><p>A data point that differs significantly from the other observations, due to measurement error, data entry error or a genuinely rare event.</p></details>
+<details><summary>Q13. How did you detect outliers?</summary><p>Visually with boxplots, and numerically with the IQR method: values below Q1 − 1.5·IQR or above Q3 + 1.5·IQR are outliers.</p></details>
+<details><summary>Q14. What is IQR?</summary><p>Inter-Quartile Range = Q3 − Q1, the spread of the middle 50% of the data. Q1 is the 25th percentile and Q3 the 75th percentile.</p></details>
+<details><summary>Q15. Why 1.5 × IQR?</summary><p>It is Tukey's rule. For normally distributed data it marks roughly the outer 0.7% of values, a good balance between removing extreme points and keeping real data.</p></details>
+<details><summary>Q16. What are other outlier detection methods?</summary><p>Z-score (|z| &gt; 3), scatter plots, percentile capping (winsorization), Isolation Forest, DBSCAN, Local Outlier Factor.</p></details>
+<details><summary>Q17. How do outliers affect Linear Regression vs Random Forest?</summary><p>Linear Regression minimises squared error, so outliers strongly pull the line and hurt accuracy. Random Forest is more robust because tree splits and averaging limit the influence of a few extreme points.</p></details>
+<details><summary>Q18. What does a boxplot show?</summary><p>Minimum (lower whisker), Q1, median, Q3, maximum (upper whisker) and individual points beyond the whiskers as outliers.</p></details>
+
+<h3>Correlation</h3>
+<details><summary>Q19. What is correlation? What is its range?</summary><p>A measure of the strength and direction of a linear relationship between two variables. Range −1 to +1.</p></details>
+<details><summary>Q20. Which correlation method does <code>df.corr()</code> use? Name others.</summary><p>Pearson by default. Others: Spearman (rank-based, monotonic relationships) and Kendall's tau.</p></details>
+<details><summary>Q21. Which feature is most correlated with fare? Why?</summary><p><code>distance_km</code> — the longer the trip, the higher the fare, because Uber pricing is based mainly on distance and time.</p></details>
+<details><summary>Q22. Correlation vs causation?</summary><p>Correlation only shows that two variables move together; causation means one actually causes the other. Correlation does not imply causation.</p></details>
+<details><summary>Q23. What is multicollinearity and why is it a problem?</summary><p>When independent features are highly correlated with each other. In Linear Regression it makes coefficients unstable and hard to interpret. Detected via correlation matrix or VIF (Variance Inflation Factor).</p></details>
+
+<h3>Linear Regression</h3>
+<details><summary>Q24. What is Linear Regression? Give its equation.</summary><p>A model that predicts y as a linear combination of features: ŷ = β₀ + β₁x₁ + … + βₙxₙ, where β₀ is the intercept and β₁…βₙ are coefficients.</p></details>
+<details><summary>Q25. How are the coefficients found?</summary><p>By Ordinary Least Squares — choosing β that minimises the sum of squared differences between actual and predicted values. Can also be done with Gradient Descent.</p></details>
+<details><summary>Q26. What are the assumptions of Linear Regression?</summary><p>Linear relationship, independent errors, homoscedasticity (constant error variance), normally distributed errors, no multicollinearity.</p></details>
+<details><summary>Q27. Simple vs multiple linear regression?</summary><p>Simple uses one independent variable; multiple uses two or more. This practical uses multiple linear regression.</p></details>
+
+<h3>Random Forest</h3>
+<details><summary>Q28. What is Random Forest?</summary><p>An ensemble learning method that builds many decision trees on bootstrap samples with random feature subsets and averages their predictions (for regression) or takes a majority vote (for classification).</p></details>
+<details><summary>Q29. What is bagging?</summary><p>Bootstrap Aggregating: train several models on random samples drawn with replacement from the training set and combine their outputs. It reduces variance.</p></details>
+<details><summary>Q30. Why is Random Forest better than a single Decision Tree?</summary><p>A single tree overfits (high variance). Averaging many de-correlated trees reduces variance and gives more stable, accurate predictions.</p></details>
+<details><summary>Q31. What do <code>n_estimators</code>, <code>random_state</code> and <code>n_jobs=-1</code> mean?</summary><p><code>n_estimators</code>: number of trees. <code>random_state</code>: seed for reproducible results. <code>n_jobs=-1</code>: use all CPU cores in parallel.</p></details>
+<details><summary>Q32. Bagging vs boosting?</summary><p>Bagging trains models independently in parallel and averages them (Random Forest) — reduces variance. Boosting trains models sequentially, each correcting the previous one's errors (AdaBoost, XGBoost, Gradient Boosting) — reduces bias.</p></details>
+<details><summary>Q33. Why did Random Forest perform better here?</summary><p>Fare depends non-linearly on features (time-of-day surges, location effects, flat base fare). Random Forest can model non-linear relationships and interactions; Linear Regression can only fit a straight line.</p></details>
+<details><summary>Q34. Does Random Forest need feature scaling?</summary><p>No. Tree splits depend on thresholds, not on distances or magnitudes, so scaling does not change the result.</p></details>
+
+<h3>Evaluation</h3>
+<details><summary>Q35. What is R² score? Can it be negative?</summary><p>R² = 1 − SS_res/SS_tot, the proportion of variance in the target explained by the model. 1 is perfect, 0 means as good as predicting the mean. Yes, it can be negative when the model is worse than predicting the mean.</p></details>
+<details><summary>Q36. MSE vs RMSE vs MAE?</summary><p>MSE = mean of squared errors (unit²; punishes big errors). RMSE = √MSE (same unit as target, USD). MAE = mean of absolute errors (same unit, less sensitive to outliers).</p></details>
+<details><summary>Q37. Why use RMSE instead of MSE when reporting?</summary><p>RMSE is in the same unit as the fare, so "RMSE = 2.0" means predictions are off by about $2 — easy to interpret.</p></details>
+<details><summary>Q38. Why split the data into train and test sets?</summary><p>To measure how well the model generalises to unseen data. Evaluating on training data would hide overfitting.</p></details>
+<details><summary>Q39. What are overfitting and underfitting?</summary><p>Overfitting: model learns noise, very good on train but poor on test (high variance). Underfitting: model too simple to capture the pattern, poor on both (high bias).</p></details>
+<details><summary>Q40. How could you improve the model further?</summary><p>Hyper-parameter tuning (GridSearchCV / RandomizedSearchCV), cross-validation, more features (airport trips, distance to city centre, weather, traffic), or boosting models like XGBoost / Gradient Boosting.</p></details>
+
+<h3>Libraries</h3>
+<details><summary>Q41. Role of each library used?</summary><p>NumPy — numerical operations (Haversine). Pandas — loading and cleaning data (DataFrame). Matplotlib/Seaborn — plots (boxplot, heatmap, bar chart). Scikit-learn — train_test_split, models, metrics.</p></details>
+<details><summary>Q42. What does <code>fit()</code> and <code>predict()</code> do?</summary><p><code>fit(X_train, y_train)</code> learns the model parameters from training data. <code>predict(X_test)</code> uses the learnt model to output predictions for new data.</p></details>
+
+</div>
+</body>
+</html>
